@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Camada de execução para automações web que se conserta sozinha quando o sistema-alvo muda.">
+<meta property="og:title" content="Zelo — automação que não quebra">
+<meta property="og:description" content="O robô aprende com a quebra em vez de morrer nela.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>">
+<title>Zelo — automação que não quebra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Karla:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+  :root{
+    --paper:#F4F6F7;
+    --surface:#FFFFFF;
+    --ink:#141A1F;
+    --ink-soft:#5C6B77;
+    --line:#DDE3E7;
+    --repair:#00806A;
+    --break:#C13B31;
+    --serif:"Newsreader",Georgia,"Times New Roman",serif;
+    --sans:"Karla","Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono","Consolas",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1317; --surface:#161D23; --ink:#EAF0F3; --ink-soft:#94A5B1;
+      --line:#26313A; --repair:#22C79E; --break:#F4655B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1317; --surface:#161D23; --ink:#EAF0F3; --ink-soft:#94A5B1;
+    --line:#26313A; --repair:#22C79E; --break:#F4655B;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:17px; line-height:1.6;
+    margin:0; padding:0 24px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:660px; margin:0 auto}
+
+  header{padding:88px 0 0}
+  .marca{
+    font-family:var(--serif); font-size:15px; font-weight:500;
+    letter-spacing:.34em; text-transform:uppercase; color:var(--ink-soft);
+    margin:0 0 56px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:400; font-size:clamp(34px,6.2vw,52px);
+    line-height:1.14; letter-spacing:-.015em; text-wrap:balance;
+    margin:0 0 22px;
+  }
+  h1 em{font-style:italic; color:var(--repair)}
+  .sub{font-size:19px; color:var(--ink-soft); margin:0; max-width:52ch}
+
+  /* trilha — o mecanismo, não uma ilustração dele */
+  .trilha{
+    font-family:var(--mono); font-size:13.5px; line-height:1.85;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:22px 24px; margin:52px 0 0; overflow-x:auto;
+  }
+  .trilha .l{display:block; white-space:pre; opacity:0; animation:surge .01s forwards}
+  .trilha .m{color:var(--ink-soft)}
+  .trilha .ok{color:var(--repair); font-weight:700}
+  .trilha .er{color:var(--break); font-weight:700}
+  @keyframes surge{to{opacity:1}}
+  .trilha .l:nth-child(1){animation-delay:.15s}
+  .trilha .l:nth-child(2){animation-delay:.75s}
+  .trilha .l:nth-child(3){animation-delay:1.35s}
+  .trilha .l:nth-child(4){animation-delay:1.95s}
+  .trilha .l:nth-child(5){animation-delay:2.55s}
+  .trilha .l:nth-child(6){animation-delay:3.35s}
+  @media (prefers-reduced-motion:reduce){
+    .trilha .l{opacity:1; animation:none}
+  }
+
+  section{margin-top:76px}
+  h2{
+    font-family:var(--sans); font-size:12.5px; font-weight:700;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft);
+    margin:0 0 20px;
+  }
+  p{margin:0 0 18px; max-width:64ch}
+  p:last-child{margin-bottom:0}
+  strong{font-weight:700}
+
+  .camadas{display:grid; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .camada{background:var(--surface); padding:22px 24px}
+  .camada h3{
+    font-family:var(--sans); font-size:16px; font-weight:700; margin:0 0 6px;
+  }
+  .camada.foco h3{color:var(--repair)}
+  .camada p{font-size:15.5px; color:var(--ink-soft); margin:0}
+
+  .frase{
+    font-family:var(--serif); font-size:clamp(23px,4vw,30px); font-style:italic;
+    line-height:1.35; text-wrap:balance; margin:0; padding:40px 0;
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  }
+
+  dl{display:grid; grid-template-columns:auto 1fr; gap:14px 28px; margin:0}
+  dt{font-weight:700; font-size:15px; color:var(--repair); white-space:nowrap}
+  dd{margin:0; font-size:16px; color:var(--ink-soft)}
+  @media (max-width:540px){
+    dl{grid-template-columns:1fr; gap:4px 0}
+    dd{margin-bottom:14px}
+  }
+
+  footer{
+    margin-top:76px; padding-top:28px; border-top:1px solid var(--line);
+    font-size:14.5px; color:var(--ink-soft);
+  }
+  footer a{color:var(--repair); text-decoration:none; border-bottom:1px solid transparent}
+  footer a:hover,footer a:focus-visible{border-bottom-color:currentColor}
+  :focus-visible{outline:2px solid var(--repair); outline-offset:3px}
+  html{margin:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <p class="marca">Zelo</p>
+    <h1>Automação que <em>não quebra</em>.</h1>
+    <p class="sub">O robô aprende com a quebra em vez de morrer nela.</p>
+
+    <div class="trilha" aria-label="Trilha de uma execução real">
+      <span class="l m">15:26:41  passo      competência 08/2026 selecionada</span>
+      <span class="l"><span class="er">15:26:42  falhou</span>     consultar: #btn-consultar não existe mais</span>
+      <span class="l m">15:26:42  reparo     procurando por intenção: “o botão que consulta as guias”</span>
+      <span class="l"><span class="ok">15:26:42  reparado</span>   encontrado em #acao-consulta-2026 — execução continua</span>
+      <span class="l"><span class="ok">15:26:42  aprendeu</span>   caminho rápido reescrito</span>
+      <span class="l"><span class="ok">15:26:44  sucesso</span>    guia emitida · protocolo DEMO-202608-004417</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>O problema</h2>
+    <p>Automações de processo quebram porque dependem de seletores congelados em sistemas que
+    mudam sem aviso. O custo dominante não é construir o robô — é <strong>mantê-lo vivo</strong>.</p>
+    <p>Cada robô novo adiciona superfície permanente de quebra à conta de manutenção. Chega um
+    ponto em que o time só remenda a frota existente e para de automatizar coisas novas. E a
+    falha costuma ser silenciosa: quem descobre é a operação, com o processo já atrasado.</p>
+  </section>
+
+  <section>
+    <h2>Como funciona</h2>
+    <div class="camadas">
+      <div class="camada">
+        <h3>Runtime rápido</h3>
+        <p>Roda o caminho determinístico já aprendido. Barato, em milissegundos.</p>
+      </div>
+      <div class="camada foco">
+        <h3>Auto-reparo</h3>
+        <p>Quando o caminho falha, um agente com visão da página reencontra o elemento pela
+        intenção, conclui a execução e reescreve o caminho rápido para as próximas rodadas.</p>
+      </div>
+      <div class="camada">
+        <h3>Observabilidade</h3>
+        <p>Trilha de cada execução, diff do que mudou no sistema-alvo e alerta quando um reparo
+        altera comportamento de forma relevante.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="frase">A automação é descrita pela intenção, não pelo seletor.</p>
+  </section>
+
+  <section>
+    <h2>Diferencial</h2>
+    <p>Ferramentas de RPA tradicionais tratam a quebra como exceção a ser consertada por gente.
+    Agentes de navegador genéricos são caros e não-determinísticos demais para rodar mil vezes
+    por dia.</p>
+    <p>Zelo é determinístico por padrão e agêntico só na falha — e o agente deixa o sistema
+    <strong>mais barato depois de agir</strong>, porque atualiza o caminho rápido. O reparo
+    acontece uma vez; o custo não se repete.</p>
+  </section>
+
+  <section>
+    <h2>Negócio</h2>
+    <dl>
+      <dt>Quem paga</dt>
+      <dd>Empresas com processos repetitivos sobre sistemas web de terceiros — portais do
+      governo, ERPs, CRMs, bancos.</dd>
+      <dt>Por onde entra</dt>
+      <dd>PMEs e áreas de operação que já sentem o custo de manutenção e não têm time de
+      plataforma para absorvê-lo.</dd>
+      <dt>Modelo</dt>
+      <dd>Assinatura por automação ativa mais consumo de execução.</dd>
+      <dt>Aquisição</dt>
+      <dd>Piloto pago e curto sobre uma automação crítica, com critério de sucesso combinado
+      antes.</dd>
+      <dt>Estágio</dt>
+      <dd>Pré-MVP funcional. O mecanismo central roda ponta a ponta sobre um portal de testes,
+      com trilha de execução.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <p>Matheus Raul — fundador. Candidatura ao FIAP Amplifier 2026.<br>
+    <a href="mailto:matheusraulm1@gmail.com">matheusraulm1@gmail.com</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
